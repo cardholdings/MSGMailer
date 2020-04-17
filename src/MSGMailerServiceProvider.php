@@ -24,13 +24,14 @@ class MSGMailerServiceProvider extends MailServiceProvider
     //   ],
     //   'msgmailer'
     // );
-
-    // $this->publishes(
-    //   [
-    //     __DIR__ . '/Resources/migrations/*' => database_path('/migrations/*')
-    //   ],
-    //   'msgmailer'
-    // );
+    if (env('MSGMAILER_USE_DB_CACHE')) {
+      // $this->publishes(
+      //   [
+      //     __DIR__ . '/Resources/migrations/*' => database_path('/migrations/*')
+      //   ],
+      //   'msgmailer'
+      // );
+    }
   }
 
   public function register()

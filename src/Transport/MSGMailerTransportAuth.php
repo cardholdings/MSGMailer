@@ -97,7 +97,6 @@ class MSGMailerTransportAuth
     $this->setNextExpiration(Carbon::now(), $expires_in);
 
     config(["msgmailer.lastAccessToken" => $access_token]);
-    // $this->lastAccessToken = $access_token;
 
     return $access_token;
   }
