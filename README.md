@@ -17,12 +17,21 @@ Comment out:
 Illuminate\Mail\MailServiceProvider::class,
 ```
 
-in your app.config.app file.
+in your `./app/config/app.php` file.
 
 ```.env
 MSGMAILER_TENANT_ID={YOUR MSGRAPH TENANT ID}
 MSGMAILER_CLIENT_ID={YOUR MSGRAPH CLIENT ID}
 MSGMAILER_CLIENT_SECRET={YOUR MSGRAPH CLIENT SECRET}
+MSGMAILER_TABLE_NAME={YOUR DB TABLE NAME FOR PERSISTENT ACCESS_KEY}
+```
+
+In your `./app/config/mail.php` add 'msgmailer' under `mailers`
+
+```php
+'msgmailer' => [
+            'transport' => 'msgmailer',
+        ]
 ```
 
 ## Test
