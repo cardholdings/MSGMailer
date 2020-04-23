@@ -20,6 +20,10 @@ Illuminate\Mail\MailServiceProvider::class,
 in your `./app/config/app.php` file.
 
 ```dotenv
+MAIL_MAILER=msgmailer
+MAIL_FROM_ADDRESS=urdefault@email.com
+MAIL_FROM_NAME="Desired name!"
+
 MSGMAILER_TENANT_ID={YOUR MSGRAPH TENANT ID}
 MSGMAILER_CLIENT_ID={YOUR MSGRAPH CLIENT ID}
 MSGMAILER_CLIENT_SECRET={YOUR MSGRAPH CLIENT SECRET}
