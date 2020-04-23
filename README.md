@@ -52,6 +52,8 @@ php artisan tinker
 ```
 
 ## TODO
-- Add Exception Handling (Mostly to handle recall for a new access key!)
+- Add Exception Handling (Mostly to handle recall for a new access key!).
 - Add option to separate every receiver.
 - Make the option to include body preview.
+- Write decent tests.
+- Create some standard templates to include.
