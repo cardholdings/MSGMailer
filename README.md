@@ -4,7 +4,7 @@ Add Microsoft Graph Send.Mail capability to your Laravel application, sends the 
 
 ## Install
 
-Include with composer.
+Require with composer.
 Run:
 
 ```
@@ -19,12 +19,11 @@ Illuminate\Mail\MailServiceProvider::class,
 
 in your `./app/config/app.php` file.
 
-```.env
+```dotenv
 MSGMAILER_TENANT_ID={YOUR MSGRAPH TENANT ID}
 MSGMAILER_CLIENT_ID={YOUR MSGRAPH CLIENT ID}
 MSGMAILER_CLIENT_SECRET={YOUR MSGRAPH CLIENT SECRET}
-MSGMAILER_USE_DB_CACHE=true
-MSGMAILER_TABLE_NAME={YOUR DB TABLE NAME FOR PERSISTENT ACCESS_KEY}
+MSGMAILER_CACHE_NAME={YOUR CACHE NAME FOR PERSISTENT ACCESS_KEY}
 ```
 
 In your `./app/config/mail.php` add 'msgmailer' under `mailers`
@@ -47,3 +46,8 @@ php artisan tinker
         }
     );
 ```
+
+## TODO
+- Add Exception Handling (Mostly to handle recall for a new access key!)
+- Add option to separate every receiver.
+- Make the option to include body preview.

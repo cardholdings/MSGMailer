@@ -29,9 +29,15 @@ return [
   'grant_type' => env('MSGMAILER_GRANT_TYPE', "client_credentials"),
   /**
    * 
-   * Database table name for persistant storage of access token and timout value
+   * Cache name for persistant storage of access token and timout value
    * Minimizes the request calls we have to make to the authorization end at microsoft,
    * and actually utilizing the key for an whole hour before getting a new one!
    */
-  'table_name' => env('MSGMAILER_TABLE_NAME', "msgmailer")
+  'cache_name' => env('MSGMAILER_CACHE_NAME', "msgmailer.access"),
+  /**
+   * 
+   * Save the sent message to sent items on the mail account.
+   */
+  'store_sent' => false,
+
 ];

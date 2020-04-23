@@ -4,15 +4,18 @@ namespace CH\MSGMailer\Transport;
 
 use Illuminate\Mail\Transport\Transport;
 use Swift_Mime_SimpleMessage;
+use Swift_Attachment;
 
 use Illuminate\Support\Facades\Log;
 
 class MSGMailerTransport extends Transport
 {
+  use MSGMailerTransportAuth;
+  private $cache_name;
 
   public function __construct()
   {
-    $this->transportAuthentication = new MSGMailerTransportAuth();
+    $this->cache_name = config('msgmailer.cache_name');
   }
 
   public function send(Swift_Mime_SimpleMessage $message, &$failedRecipients = null)
@@ -20,22 +23,20 @@ class MSGMailerTransport extends Transport
 
     $this->beforeSendPerformed($message);
 
-    $token = $this->transportAuthentication->auth();
-    Log::info($token);
-    $msgmailer = new \CH\MSGMailer\Client(
-      $token
+    $token = $this->auth();
+
+
+    $msgmailer = new \CH\MSGMailer\MSGMailClient(
+      $token,
+      [$this, 'auth'],
+      $message
     );
 
-    $response = $msgmailer->post('send', ['body' => $this->getBody($message)]);
+    $response = $msgmailer->send();
 
-    $this->sendPerformed($message);
+    $this->sendPerformed($message, $response);
 
     return $this->numberOfRecipients($message);
-  }
-
-  private function getAccessToken()
-  {
-    return $this->accessToken;
   }
 
   /**
@@ -48,17 +49,13 @@ class MSGMailerTransport extends Transport
   protected function getBody(Swift_Mime_SimpleMessage $message)
   {
     return [
-      'Messages' => [
-        [
-          'From' => [
-            'Email' => config('mail.from.address'),
-            'Name' => config('mail.from.name')
-          ],
-          'To' => $this->getTo($message),
-          'Subject' => $message->getSubject(),
-          'HTMLPart' => $message->getBody(),
-        ]
-      ]
+      'From' => [
+        'Email' => config('mail.from.address'),
+        'Name' => config('mail.from.name')
+      ],
+      'To' => $this->getTo($message),
+      'Subject' => $message->getSubject(),
+      'HTMLPart' => $message->getBody(),
     ];
   }
 

@@ -20,16 +20,18 @@ class MSGMailerServiceProvider extends MailServiceProvider
 
     // $this->publishes(
     //   [
-    //     __DIR__ . '/Resources/views/*' => resources_path('')
+    //     __DIR__ . '/Resources/views' => resources_path('views/vendor/')
     //   ],
-    //   'msgmailer'
+    //   'msgmailer:views'
     // );
-    if (env('MSGMAILER_USE_DB_CACHE')) {
+
+    // $this->loadViews(__DIR__.'/Resources/views', 'msgmailer');
+    if (env('MSGMAILER_USE_CACHE')) {
       // $this->publishes(
       //   [
-      //     __DIR__ . '/Resources/migrations/*' => database_path('/migrations/*')
+      //     __DIR__ . '/Database/migrations' => database_path('/migrations')
       //   ],
-      //   'msgmailer'
+      //   'msgmailer:migration'
       // );
     }
   }

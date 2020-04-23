@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 use Carbon\Carbon;
 
@@ -14,24 +15,9 @@ use Carbon\Carbon;
  * Authentication class to minimieze the calls for a new request token...
  * 
  */
-class MSGMailerTransportAuth
+trait MSGMailerTransportAuth
 {
-  private $tenantId;
-  private $clientId;
-  private $clientSecret;
-  private $scope;
-  private $grantType;
 
-  public function __construct()
-  {
-    // Check if we need to auth again
-    if (!$this->isAuthenticated()) config(["msgmailer.nextAuth" => Carbon::now()]);
-    $this->tenantId = config('msgmailer.tenant_id');
-    $this->clientId = config('msgmailer.client_id');
-    $this->clientSecret = config('msgmailer.client_secret');
-    $this->scope = config('msgmailer.scope');
-    $this->grantType = config('msgmailer.grant_type');
-  }
   /**
    * Puts the Request URI together and returns it.
    *
@@ -40,7 +26,7 @@ class MSGMailerTransportAuth
   private function getTokenRequestUri()
   {
     return MSGMailerTransportConfig::CONN_TYPE . MSGMailerTransportConfig::TOKEN_REQ_URL .
-      "/" . $this->tenantId .
+      "/" . config('msgmailer.tenant_id') .
       "/" . MSGMailerTransportConfig::TOKEN_REQ_ENDPOINT;
   }
   /**
@@ -51,10 +37,10 @@ class MSGMailerTransportAuth
   private function payload()
   {
     return [
-      'client_id' => $this->clientId,
-      'scope' => $this->scope,
-      'client_secret' => $this->clientSecret,
-      'grant_type' => $this->grantType
+      'client_id' => config('msgmailer.client_id'),
+      'scope' => config('msgmailer.scope'),
+      'client_secret' => config('msgmailer.client_secret'),
+      'grant_type' => config('msgmailer.grant_type')
     ];
   }
   /**
@@ -66,7 +52,8 @@ class MSGMailerTransportAuth
    */
   public function auth()
   {
-    if ($this->isAuthenticated()) return config("msgmailer.lastAccessToken");
+    $authed = $this->isAuthenticated();
+    if ($authed) return $authed;
 
     $cl = new GuzzleClient();
 
@@ -84,21 +71,20 @@ class MSGMailerTransportAuth
 
     $status_code = $res->getStatusCode();
 
-    if (!$status_code == 200) throw new ServerException('Status Code not 200!');
-
-    Log::info('statuscode: ' . $status_code);
+    if (!$status_code == 200) $this->handleErrorCodes($status_code);
 
     $content = json_decode($res->getBody(), true);
-    dd($content);
+
     ['token_type' => $tokenType, 'expires_in' => $expires_in, 'ext_expires_in' => $ext_expires_in, 'access_token' => $access_token] = $content;
 
-    Log::info('Token Type:  ' . $tokenType . "\n" . 'Expires In: ' . $expires_in . "\n" . 'Ext Expires In: ' . $ext_expires_in . "\n" . "Access Token: " . $access_token . "\n");
-
-    $this->setNextExpiration(Carbon::now(), $expires_in);
-
-    config(["msgmailer.lastAccessToken" => $access_token]);
+    $this->setNextExpiration(Carbon::now(), $expires_in, $access_token);
 
     return $access_token;
+  }
+
+  private function handleErrorCodes($code)
+  {
+    // 
   }
 
   /**
@@ -108,22 +94,21 @@ class MSGMailerTransportAuth
    */
   private function isAuthenticated()
   {
-    //
-    $now = Carbon::now();
-    if ($now->gt(config("msgmailer.nextAuth"))) return false;
-    Log::info("I am authenticated!, reuse the last token!");
-    return true;
+    return ((Cache::get($this->cache_name)) ? $this->fetchCachedAccessToken() : false);
   }
 
   /**
-   * Forces ReAuthentification and gets a new Access Token
+   * Fetches the cached access token, reauths if not available.
    *
    * @return void
    */
-  private function forceReAuth()
+  private function fetchCachedAccessToken()
   {
-    // 
+    $pl = Cache::get($this->cache_name);
+    if (!$pl) return $this->auth();
+    return json_decode($pl)->access_token;
   }
+
   /**
    * Sets the token expiration to support the checking of if is authenticated without
    * sending a new http request to the server, minimizing the requests needed to aquire
@@ -133,9 +118,15 @@ class MSGMailerTransportAuth
    * @param Int $expTime
    * @return void
    */
-  private function setNextExpiration(Carbon $time, Int $expTime)
+  private function setNextExpiration(Carbon $time, Int $expTime, $accessKey)
   {
     //
-    config(["msgmailer.nextAuth" => $time->addSeconds(($expTime - MSGMailerTransportConfig::TIMEOUT_DEVIATION))]);
+    $expires_in = $time->addSeconds(($expTime - MSGMailerTransportConfig::TIMEOUT_DEVIATION));
+
+    Cache::put(
+      $this->cache_name,
+      json_encode(["expires_in" => $expires_in, "access_token" => $accessKey]),
+      $expires_in
+    );
   }
 }
