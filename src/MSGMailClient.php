@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 
 use Swift_Mime_SimpleMessage;
 use Swift_Attachment;
+use Swift_MimePart;
 
 class MSGMailClient
 {
@@ -20,7 +21,8 @@ class MSGMailClient
   private $recipients;
   private $bccRecipients;
   private $ccRecipients;
-  private $attachments;
+  private $fileAttachments;
+  private $mimePartAttachments;
 
   /**
    * Creates and transforms the Swift_Mime_SimpleMessage to a valid json representation needed
@@ -38,9 +40,20 @@ class MSGMailClient
     // dd($this->msg->getTo());
     // dd($this->msg->getBcc());
     // dd(spitItOut($this->msg));
+    // dd(Swift_Attachment::class);
+    $this->fileAttachments = array_filter($this->msg->getChildren(), 'CH\MSGMailer\MapFilters::filterFileAttachments');
+    $this->mimePartAttachments = array_filter($this->msg->getChildren(), 'CH\MSGMailer\MapFilters::filterMimePartAttachments');
 
-    $this->attachments = count($this->msg->getChildren()) ?
-      $this->prepareAttachments($this->msg->getChildren()) :
+
+
+
+
+    $this->fileAttachments = count($this->fileAttachments) ?
+      $this->prepareFileAttachments($this->fileAttachments) :
+      false;
+
+    $this->mimePartAttachments = count($this->mimePartAttachments) ?
+      $this->prepareMimePartAttachments($this->mimePartAttachments) :
       false;
 
     $this->recipients = $this->prepareRecipients($this->msg->getTo());
@@ -77,7 +90,7 @@ class MSGMailClient
    * @param array $attachments
    * @return array $grp
    */
-  private function prepareAttachments(array $attachments)
+  private function prepareFileAttachments(array $attachments)
   {
     // 
     $grp = [];
@@ -91,6 +104,11 @@ class MSGMailClient
     }
 
     return $grp;
+  }
+
+  private function prepareMimePartAttachments(array $attachments)
+  {
+    // 
   }
 
 
@@ -137,7 +155,8 @@ class MSGMailClient
     return $imp[$this->msg->getPriority()];
   }
 
-  private function getMsContentType() {
+  private function getMsContentType()
+  {
     $map = ["text/plain" => "text", "text/html" => "html"];
 
     return $map[$this->msg->getBodyContentType()];
