@@ -185,7 +185,7 @@ class MSGMailClient
       "saveToSentItems" => MSGMailClientConfig::SAVE_TO_SENT
     ];
 
-    if ($this->attachments) $payload["message"]["Attachments"] = $this->attachments;
+    if ($this->fileAttachments) $payload["message"]["Attachments"] = $this->fileAttachments;
     if ($this->ccRecipients) $payload["message"]["ccRecipients"] = $this->ccRecipients;
 
     return $payload;
